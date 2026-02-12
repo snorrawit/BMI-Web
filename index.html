@@ -68,6 +68,11 @@ button{
     cursor:pointer;
 }
 
+.highlight{
+    background:#ffe082;
+    font-weight:bold;
+}
+
 </style>
 </head>
 
@@ -120,6 +125,47 @@ button{
 <canvas id="bmiChart"></canvas>
 </div>
 
+<!-- ตาราง BMI -->
+<div class="card">
+<h3>ตารางค่ามาตรฐาน BMI</h3>
+
+<table id="bmiTable" border="1" width="100%" style="text-align:center;border-collapse:collapse">
+<tr>
+<th>ค่า BMI</th>
+<th>ระดับ</th>
+</tr>
+
+<tr id="bmiUnder">
+<td>ต่ำกว่า 18.5</td>
+<td>น้ำหนักน้อย</td>
+</tr>
+
+<tr id="bmiNormal">
+<td>18.5 - 22.9</td>
+<td>ปกติ</td>
+</tr>
+
+<tr id="bmiOver">
+<td>23 - 24.9</td>
+<td>น้ำหนักเกิน</td>
+</tr>
+
+<tr id="bmiObese1">
+<td>25 - 29.9</td>
+<td>อ้วนระดับ 1</td>
+</tr>
+
+<tr id="bmiObese2">
+<td>30 ขึ้นไป</td>
+<td>อ้วนระดับ 2</td>
+</tr>
+
+</table>
+
+<h4 id="bmiStatus"></h4>
+
+</div>
+
 </div>
 
 <!-- LEADERBOARD -->
@@ -150,12 +196,7 @@ let currentUser="";
 let weightChart;
 let bmiChart;
 
-/////////////////////
-// สมัครสมาชิก
-/////////////////////
-
 function register(){
-
 let user=userInput();
 let pass=passInput();
 
@@ -163,12 +204,7 @@ if(!user || !pass) return alert("กรอกข้อมูล");
 
 localStorage.setItem("user_"+user,pass);
 alert("สมัครสำเร็จ");
-
 }
-
-/////////////////////
-// ล็อกอิน
-/////////////////////
 
 function login(){
 
@@ -191,7 +227,6 @@ loadLeaderboard();
 
 }
 else alert("ข้อมูลไม่ถูกต้อง");
-
 }
 
 function userInput(){
@@ -201,10 +236,6 @@ return document.getElementById("user").value;
 function passInput(){
 return document.getElementById("pass").value;
 }
-
-/////////////////////
-// บันทึกข้อมูล
-/////////////////////
 
 function saveData(){
 
@@ -226,40 +257,27 @@ bmi:Number(bmi)
 
 localStorage.setItem("history_"+currentUser,JSON.stringify(history));
 
-/* เพิ่ม XP */
 let xp = Number(localStorage.getItem("xp_"+currentUser) || 0);
 xp+=10;
 localStorage.setItem("xp_"+currentUser,xp);
 
 if(goal){
-
 let diff=(weight-goal).toFixed(1);
-
 document.getElementById("goalText").innerText=
 diff>0 ? "เหลือลดอีก "+diff+" กก." : "ถึงเป้าหมายแล้ว 🎉";
-
 }
 
 loadCharts();
 updateXP();
 loadLeaderboard();
+checkBMIStatus(Number(bmi));
 
 }
-
-/////////////////////
-// XP
-/////////////////////
 
 function updateXP(){
-
 let xp = localStorage.getItem("xp_"+currentUser) || 0;
 document.getElementById("xpText").innerText="XP : "+xp;
-
 }
-
-/////////////////////
-// โหลดกราฟ
-/////////////////////
 
 function loadCharts(){
 
@@ -272,7 +290,7 @@ let bmis=history.map(h=>h.bmi);
 if(weightChart) weightChart.destroy();
 if(bmiChart) bmiChart.destroy();
 
-weightChart=new Chart(weightChart = document.getElementById("weightChart"),{
+weightChart=new Chart(document.getElementById("weightChart"),{
 type:"line",
 data:{labels:labels,datasets:[{label:"น้ำหนัก",data:weights}]}
 });
@@ -284,9 +302,39 @@ data:{labels:labels,datasets:[{label:"BMI",data:bmis}]}
 
 }
 
-/////////////////////
-// Leaderboard
-/////////////////////
+function checkBMIStatus(bmi){
+
+document.querySelectorAll("#bmiTable tr").forEach(row=>{
+row.classList.remove("highlight");
+});
+
+let status="";
+
+if(bmi < 18.5){
+status="น้ำหนักน้อย";
+document.getElementById("bmiUnder").classList.add("highlight");
+}
+else if(bmi <= 22.9){
+status="น้ำหนักปกติ";
+document.getElementById("bmiNormal").classList.add("highlight");
+}
+else if(bmi <= 24.9){
+status="น้ำหนักเกิน";
+document.getElementById("bmiOver").classList.add("highlight");
+}
+else if(bmi <= 29.9){
+status="อ้วนระดับ 1";
+document.getElementById("bmiObese1").classList.add("highlight");
+}
+else{
+status="อ้วนระดับ 2";
+document.getElementById("bmiObese2").classList.add("highlight");
+}
+
+document.getElementById("bmiStatus").innerText =
+"สถานะสุขภาพของคุณ : " + status;
+
+}
 
 function loadLeaderboard(){
 
@@ -315,12 +363,10 @@ lost:weightLost
 }
 }
 
-/* เรียงอันดับ */
 let lostSort=[...users].sort((a,b)=>b.lost-a.lost);
 let recSort=[...users].sort((a,b)=>b.records-a.records);
 let xpSort=[...users].sort((a,b)=>b.xp-a.xp);
 
-/* แสดงผล */
 document.getElementById("lbWeight").innerHTML=
 lostSort.map(u=>`<li>${u.name} - ${u.lost} กก.</li>`).join("");
 
@@ -332,10 +378,6 @@ xpSort.map(u=>`<li>${u.name} - ${u.xp} XP</li>`).join("");
 
 }
 
-/////////////////////
-// เปลี่ยนหน้า
-/////////////////////
-
 function showSection(id){
 
 document.getElementById("home").style.display="none";
@@ -344,10 +386,6 @@ document.getElementById("leaderboard").style.display="none";
 document.getElementById(id).style.display="block";
 
 }
-
-/////////////////////
-// ออกจากระบบ
-/////////////////////
 
 function logout(){
 location.reload();
