@@ -10,67 +10,71 @@
 <style>
 
 body{
-    font-family:tahoma;
-    margin:0;
-    background:#f3f5f9;
-    display:flex;
+font-family:tahoma;
+margin:0;
+background:#f3f5f9;
+display:flex;
 }
 
 /* Sidebar */
 .sidebar{
-    width:220px;
-    background:#667eea;
-    color:white;
-    height:100vh;
-    padding:20px;
-}
-
-.sidebar h2{
-    text-align:center;
+width:220px;
+background:#667eea;
+color:white;
+height:100vh;
+padding:20px;
+display:none;
 }
 
 .sidebar button{
-    width:100%;
-    margin:10px 0;
-    background:white;
-    color:#667eea;
-    font-weight:bold;
+width:100%;
+margin:10px 0;
+background:white;
+color:#667eea;
+font-weight:bold;
 }
 
 /* Main */
 .main{
-    flex:1;
-    padding:20px;
+flex:1;
+padding:20px;
 }
 
 .card{
-    background:white;
-    padding:20px;
-    border-radius:15px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
-    margin-bottom:20px;
+background:white;
+padding:20px;
+border-radius:15px;
+box-shadow:0 4px 15px rgba(0,0,0,0.1);
+margin-bottom:20px;
 }
 
 input{
-    width:100%;
-    padding:10px;
-    margin:5px 0;
-    border-radius:8px;
-    border:1px solid #ccc;
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:8px;
+border:1px solid #ccc;
 }
 
 button{
-    padding:10px;
-    border:none;
-    border-radius:8px;
-    background:#667eea;
-    color:white;
-    cursor:pointer;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#667eea;
+color:white;
+cursor:pointer;
 }
 
-.highlight{
-    background:#ffe082;
-    font-weight:bold;
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+td,th{
+border:1px solid #ddd;
+padding:8px;
+text-align:center;
 }
 
 </style>
@@ -78,19 +82,26 @@ button{
 
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar" id="sidebar" style="display:none">
+<!-- เตือน 4 ทุ่ม -->
+<div id="sleepAlert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:black;color:white;align-items:center;justify-content:center;flex-direction:column;z-index:999;">
+<h1>🌙 ควรนอนได้แล้ว</h1>
+<button onclick="enterSite()">ตกลง เข้าเว็บ</button>
+</div>
 
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
 <h2>Dashboard</h2>
 
 <button onclick="showSection('home')">🏠 หน้าแรก</button>
 <button onclick="showSection('leaderboard')">🥇 Leaderboard</button>
+<button onclick="showSection('bmiTable')">📊 ตาราง BMI</button>
 <button onclick="logout()">🚪 ออกจากระบบ</button>
 
 </div>
 
 <div class="main">
 
+<!-- Login -->
 <div class="card" id="loginBox">
 <h3>เข้าสู่ระบบ</h3>
 <input id="user" placeholder="ชื่อผู้ใช้">
@@ -105,6 +116,9 @@ button{
 <div class="card">
 <h3 id="welcome"></h3>
 
+<h2 id="clock"></h2>
+<h3 id="streakText"></h3>
+
 <input id="height" placeholder="ส่วนสูง (ซม.)">
 <input id="weight" placeholder="น้ำหนัก (กก.)">
 <input id="goal" placeholder="เป้าหมาย (กก.)">
@@ -112,7 +126,7 @@ button{
 <button onclick="saveData()">บันทึกข้อมูล</button>
 
 <h4 id="goalText"></h4>
-<h4 id="xpText"></h4>
+<h4 id="bmiLevel"></h4>
 </div>
 
 <div class="card">
@@ -125,47 +139,23 @@ button{
 <canvas id="bmiChart"></canvas>
 </div>
 
-<!-- ตาราง BMI -->
-<div class="card">
-<h3>ตารางค่ามาตรฐาน BMI</h3>
-
-<table id="bmiTable" border="1" width="100%" style="text-align:center;border-collapse:collapse">
-<tr>
-<th>ค่า BMI</th>
-<th>ระดับ</th>
-</tr>
-
-<tr id="bmiUnder">
-<td>ต่ำกว่า 18.5</td>
-<td>น้ำหนักน้อย</td>
-</tr>
-
-<tr id="bmiNormal">
-<td>18.5 - 22.9</td>
-<td>ปกติ</td>
-</tr>
-
-<tr id="bmiOver">
-<td>23 - 24.9</td>
-<td>น้ำหนักเกิน</td>
-</tr>
-
-<tr id="bmiObese1">
-<td>25 - 29.9</td>
-<td>อ้วนระดับ 1</td>
-</tr>
-
-<tr id="bmiObese2">
-<td>30 ขึ้นไป</td>
-<td>อ้วนระดับ 2</td>
-</tr>
-
-</table>
-
-<h4 id="bmiStatus"></h4>
-
 </div>
 
+<!-- BMI TABLE -->
+<div id="bmiTable" style="display:none">
+<div class="card">
+<h3>📊 ตารางค่าดัชนี BMI</h3>
+
+<table>
+<tr><th>BMI</th><th>ระดับ</th></tr>
+<tr><td>น้อยกว่า 18.5</td><td>ผอม</td></tr>
+<tr><td>18.5 - 22.9</td><td>ปกติ</td></tr>
+<tr><td>23 - 24.9</td><td>น้ำหนักเกิน</td></tr>
+<tr><td>25 - 29.9</td><td>อ้วนระดับ 1</td></tr>
+<tr><td>30 ขึ้นไป</td><td>อ้วนระดับ 2</td></tr>
+</table>
+
+</div>
 </div>
 
 <!-- LEADERBOARD -->
@@ -181,11 +171,6 @@ button{
 <ul id="lbRecord"></ul>
 </div>
 
-<div class="card">
-<h3>⭐ XP สูงสุด</h3>
-<ul id="lbXP"></ul>
-</div>
-
 </div>
 
 </div>
@@ -196,92 +181,139 @@ let currentUser="";
 let weightChart;
 let bmiChart;
 
+/* เตือน 4 ทุ่ม */
+let hour=new Date().getHours();
+if(hour>=22){
+document.getElementById("sleepAlert").style.display="flex";
+}
+
+function enterSite(){
+document.getElementById("sleepAlert").style.display="none";
+}
+
+/* Clock */
+setInterval(()=>{
+document.getElementById("clock").innerText=
+new Date().toLocaleTimeString();
+},1000);
+
+/* Register */
 function register(){
-let user=userInput();
-let pass=passInput();
-
-if(!user || !pass) return alert("กรอกข้อมูล");
-
-localStorage.setItem("user_"+user,pass);
+let u=userInput();
+let p=passInput();
+if(!u||!p) return alert("กรอกข้อมูล");
+localStorage.setItem("user_"+u,p);
 alert("สมัครสำเร็จ");
 }
 
+/* Login */
 function login(){
 
-let user=userInput();
-let pass=passInput();
+let u=userInput();
+let p=passInput();
 
-if(localStorage.getItem("user_"+user)===pass){
+if(localStorage.getItem("user_"+u)===p){
 
-currentUser=user;
+currentUser=u;
 
-document.getElementById("loginBox").style.display="none";
-document.getElementById("sidebar").style.display="block";
-document.getElementById("home").style.display="block";
+loginBox.style.display="none";
+sidebar.style.display="block";
+home.style.display="block";
 
-document.getElementById("welcome").innerText="สวัสดี "+user;
+welcome.innerText="สวัสดี "+u;
 
 loadCharts();
-updateXP();
+updateStreak();
 loadLeaderboard();
 
-}
-else alert("ข้อมูลไม่ถูกต้อง");
+}else alert("ข้อมูลไม่ถูกต้อง");
+
 }
 
-function userInput(){
-return document.getElementById("user").value;
-}
+function userInput(){ return user.value; }
+function passInput(){ return pass.value; }
 
-function passInput(){
-return document.getElementById("pass").value;
-}
-
+/* Save Data */
 function saveData(){
 
-let height=document.getElementById("height").value/100;
-let weight=document.getElementById("weight").value;
-let goal=document.getElementById("goal").value;
+let h=height.value/100;
+let w=weight.value;
+let goal=goalInput();
 
-if(!height || !weight) return alert("กรอกข้อมูล");
+if(!h||!w) return alert("กรอกข้อมูล");
 
-let bmi=(weight/(height*height)).toFixed(2);
+let bmi=(w/(h*h)).toFixed(2);
 
-let history=JSON.parse(localStorage.getItem("history_"+currentUser)) || [];
+/* บันทึก history */
+let history=JSON.parse(localStorage.getItem("history_"+currentUser))||[];
 
 history.push({
 date:new Date().toLocaleDateString(),
-weight:Number(weight),
+weight:Number(w),
 bmi:Number(bmi)
 });
 
 localStorage.setItem("history_"+currentUser,JSON.stringify(history));
 
-let xp = Number(localStorage.getItem("xp_"+currentUser) || 0);
-xp+=10;
-localStorage.setItem("xp_"+currentUser,xp);
-
+/* Goal */
 if(goal){
-let diff=(weight-goal).toFixed(1);
-document.getElementById("goalText").innerText=
-diff>0 ? "เหลือลดอีก "+diff+" กก." : "ถึงเป้าหมายแล้ว 🎉";
+let diff=(w-goal).toFixed(1);
+goalText.innerText= diff>0 ? "เหลือลดอีก "+diff+" กก." : "ถึงเป้าแล้ว 🎉";
 }
 
+/* BMI Level */
+let level="";
+if(bmi<18.5) level="ผอม";
+else if(bmi<23) level="ปกติ";
+else if(bmi<25) level="น้ำหนักเกิน";
+else if(bmi<30) level="อ้วนระดับ1";
+else level="อ้วนระดับ2";
+
+bmiLevel.innerText="ระดับ BMI : "+level;
+
+/* ----- STREAK ----- */
+let today=new Date().toLocaleDateString();
+let lastDate=localStorage.getItem("lastDate_"+currentUser);
+let streak=Number(localStorage.getItem("streak_"+currentUser)||0);
+
+if(!lastDate){
+streak=1;
+}else{
+
+let y=new Date();
+y.setDate(y.getDate()-1);
+y=y.toLocaleDateString();
+
+if(lastDate===y){
+streak++;
+}
+else if(lastDate!==today){
+streak=1;
+}
+
+}
+
+localStorage.setItem("streak_"+currentUser,streak);
+localStorage.setItem("lastDate_"+currentUser,today);
+
+updateStreak();
 loadCharts();
-updateXP();
 loadLeaderboard();
-checkBMIStatus(Number(bmi));
 
 }
 
-function updateXP(){
-let xp = localStorage.getItem("xp_"+currentUser) || 0;
-document.getElementById("xpText").innerText="XP : "+xp;
+function goalInput(){ return goal.value; }
+
+/* Update Streak */
+function updateStreak(){
+let s=Number(localStorage.getItem("streak_"+currentUser)||0);
+streakText.innerText="🔥".repeat(s)+" ("+s+" วัน)";
 }
 
+/* Charts */
 function loadCharts(){
 
-let history=JSON.parse(localStorage.getItem("history_"+currentUser)) || [];
+let history=JSON.parse(localStorage.getItem("history_"+currentUser))||[];
 
 let labels=history.map(h=>h.date);
 let weights=history.map(h=>h.weight);
@@ -290,7 +322,7 @@ let bmis=history.map(h=>h.bmi);
 if(weightChart) weightChart.destroy();
 if(bmiChart) bmiChart.destroy();
 
-weightChart=new Chart(document.getElementById("weightChart"),{
+weightChart=new Chart(weightChart = document.getElementById("weightChart"),{
 type:"line",
 data:{labels:labels,datasets:[{label:"น้ำหนัก",data:weights}]}
 });
@@ -302,40 +334,7 @@ data:{labels:labels,datasets:[{label:"BMI",data:bmis}]}
 
 }
 
-function checkBMIStatus(bmi){
-
-document.querySelectorAll("#bmiTable tr").forEach(row=>{
-row.classList.remove("highlight");
-});
-
-let status="";
-
-if(bmi < 18.5){
-status="น้ำหนักน้อย";
-document.getElementById("bmiUnder").classList.add("highlight");
-}
-else if(bmi <= 22.9){
-status="น้ำหนักปกติ";
-document.getElementById("bmiNormal").classList.add("highlight");
-}
-else if(bmi <= 24.9){
-status="น้ำหนักเกิน";
-document.getElementById("bmiOver").classList.add("highlight");
-}
-else if(bmi <= 29.9){
-status="อ้วนระดับ 1";
-document.getElementById("bmiObese1").classList.add("highlight");
-}
-else{
-status="อ้วนระดับ 2";
-document.getElementById("bmiObese2").classList.add("highlight");
-}
-
-document.getElementById("bmiStatus").innerText =
-"สถานะสุขภาพของคุณ : " + status;
-
-}
-
+/* Leaderboard */
 function loadLeaderboard(){
 
 let users=[];
@@ -344,20 +343,18 @@ for(let key in localStorage){
 
 if(key.startsWith("user_")){
 
-let user=key.replace("user_","");
-let history=JSON.parse(localStorage.getItem("history_"+user)) || [];
-let xp=Number(localStorage.getItem("xp_"+user) || 0);
+let u=key.replace("user_","");
+let history=JSON.parse(localStorage.getItem("history_"+u))||[];
 
-let weightLost=0;
+let lost=0;
 if(history.length>1){
-weightLost = history[0].weight - history[history.length-1].weight;
+lost=history[0].weight-history[history.length-1].weight;
 }
 
 users.push({
-name:user,
+name:u,
 records:history.length,
-xp:xp,
-lost:weightLost
+lost:lost
 });
 
 }
@@ -365,28 +362,22 @@ lost:weightLost
 
 let lostSort=[...users].sort((a,b)=>b.lost-a.lost);
 let recSort=[...users].sort((a,b)=>b.records-a.records);
-let xpSort=[...users].sort((a,b)=>b.xp-a.xp);
 
-document.getElementById("lbWeight").innerHTML=
-lostSort.map(u=>`<li>${u.name} - ${u.lost} กก.</li>`).join("");
-
-document.getElementById("lbRecord").innerHTML=
-recSort.map(u=>`<li>${u.name} - ${u.records} ครั้ง</li>`).join("");
-
-document.getElementById("lbXP").innerHTML=
-xpSort.map(u=>`<li>${u.name} - ${u.xp} XP</li>`).join("");
+lbWeight.innerHTML=lostSort.map(u=>`<li>${u.name} - ${u.lost} กก.</li>`).join("");
+lbRecord.innerHTML=recSort.map(u=>`<li>${u.name} - ${u.records} ครั้ง</li>`).join("");
 
 }
 
+/* Section */
 function showSection(id){
-
-document.getElementById("home").style.display="none";
-document.getElementById("leaderboard").style.display="none";
+home.style.display="none";
+leaderboard.style.display="none";
+bmiTable.style.display="none";
 
 document.getElementById(id).style.display="block";
-
 }
 
+/* Logout */
 function logout(){
 location.reload();
 }
