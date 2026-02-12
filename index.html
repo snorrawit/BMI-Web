@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    font-family:tahoma;
+    margin:0;
+    background:#f3f5f9;
+    display:flex;
+}
+
+/* Sidebar */
+.sidebar{
+    width:220px;
+    background:#667eea;
+    color:white;
+    height:100vh;
+    padding:20px;
+}
+
+.sidebar h2{
+    text-align:center;
+}
+
+.sidebar button{
+    width:100%;
+    margin:10px 0;
+    background:white;
+    color:#667eea;
+    font-weight:bold;
+}
+
+/* Main */
+.main{
+    flex:1;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button{
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#667eea;
+    color:white;
+    cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar" style="display:none">
+
+<h2>Dashboard</h2>
+
+<button onclick="showSection('home')">🏠 หน้าแรก</button>
+<button onclick="showSection('leaderboard')">🥇 Leaderboard</button>
+<button onclick="logout()">🚪 ออกจากระบบ</button>
+
+</div>
+
+<div class="main">
+
+<div class="card" id="loginBox">
+<h3>เข้าสู่ระบบ</h3>
+<input id="user" placeholder="ชื่อผู้ใช้">
+<input id="pass" type="password" placeholder="รหัสผ่าน">
+<button onclick="register()">สมัครสมาชิก</button>
+<button onclick="login()">เข้าสู่ระบบ</button>
+</div>
+
+<!-- HOME -->
+<div id="home" style="display:none">
+
+<div class="card">
+<h3 id="welcome"></h3>
+
+<input id="height" placeholder="ส่วนสูง (ซม.)">
+<input id="weight" placeholder="น้ำหนัก (กก.)">
+<input id="goal" placeholder="เป้าหมาย (กก.)">
+
+<button onclick="saveData()">บันทึกข้อมูล</button>
+
+<h4 id="goalText"></h4>
+<h4 id="xpText"></h4>
+</div>
+
+<div class="card">
+<h3>กราฟน้ำหนัก</h3>
+<canvas id="weightChart"></canvas>
+</div>
+
+<div class="card">
+<h3>กราฟ BMI</h3>
+<canvas id="bmiChart"></canvas>
+</div>
+
+</div>
+
+<!-- LEADERBOARD -->
+<div id="leaderboard" style="display:none">
+
+<div class="card">
+<h3>🥇 ลดน้ำหนักได้มากที่สุด</h3>
+<ul id="lbWeight"></ul>
+</div>
+
+<div class="card">
+<h3>📅 บันทึกข้อมูลสม่ำเสมอ</h3>
+<ul id="lbRecord"></ul>
+</div>
+
+<div class="card">
+<h3>⭐ XP สูงสุด</h3>
+<ul id="lbXP"></ul>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let currentUser="";
+let weightChart;
+let bmiChart;
+
+/////////////////////
+// สมัครสมาชิก
+/////////////////////
+
+function register(){
+
+let user=userInput();
+let pass=passInput();
+
+if(!user || !pass) return alert("กรอกข้อมูล");
+
+localStorage.setItem("user_"+user,pass);
+alert("สมัครสำเร็จ");
+
+}
+
+/////////////////////
+// ล็อกอิน
+/////////////////////
+
+function login(){
+
+let user=userInput();
+let pass=passInput();
+
+if(localStorage.getItem("user_"+user)===pass){
+
+currentUser=user;
+
+document.getElementById("loginBox").style.display="none";
+document.getElementById("sidebar").style.display="block";
+document.getElementById("home").style.display="block";
+
+document.getElementById("welcome").innerText="สวัสดี "+user;
+
+loadCharts();
+updateXP();
+loadLeaderboard();
+
+}
+else alert("ข้อมูลไม่ถูกต้อง");
+
+}
+
+function userInput(){
+return document.getElementById("user").value;
+}
+
+function passInput(){
+return document.getElementById("pass").value;
+}
+
+/////////////////////
+// บันทึกข้อมูล
+/////////////////////
+
+function saveData(){
+
+let height=document.getElementById("height").value/100;
+let weight=document.getElementById("weight").value;
+let goal=document.getElementById("goal").value;
+
+if(!height || !weight) return alert("กรอกข้อมูล");
+
+let bmi=(weight/(height*height)).toFixed(2);
+
+let history=JSON.parse(localStorage.getItem("history_"+currentUser)) || [];
+
+history.push({
+date:new Date().toLocaleDateString(),
+weight:Number(weight),
+bmi:Number(bmi)
+});
+
+localStorage.setItem("history_"+currentUser,JSON.stringify(history));
+
+/* เพิ่ม XP */
+let xp = Number(localStorage.getItem("xp_"+currentUser) || 0);
+xp+=10;
+localStorage.setItem("xp_"+currentUser,xp);
+
+if(goal){
+
+let diff=(weight-goal).toFixed(1);
+
+document.getElementById("goalText").innerText=
+diff>0 ? "เหลือลดอีก "+diff+" กก." : "ถึงเป้าหมายแล้ว 🎉";
+
+}
+
+loadCharts();
+updateXP();
+loadLeaderboard();
+
+}
+
+/////////////////////
+// XP
+/////////////////////
+
+function updateXP(){
+
+let xp = localStorage.getItem("xp_"+currentUser) || 0;
+document.getElementById("xpText").innerText="XP : "+xp;
+
+}
+
+/////////////////////
+// โหลดกราฟ
+/////////////////////
+
+function loadCharts(){
+
+let history=JSON.parse(localStorage.getItem("history_"+currentUser)) || [];
+
+let labels=history.map(h=>h.date);
+let weights=history.map(h=>h.weight);
+let bmis=history.map(h=>h.bmi);
+
+if(weightChart) weightChart.destroy();
+if(bmiChart) bmiChart.destroy();
+
+weightChart=new Chart(weightChart = document.getElementById("weightChart"),{
+type:"line",
+data:{labels:labels,datasets:[{label:"น้ำหนัก",data:weights}]}
+});
+
+bmiChart=new Chart(document.getElementById("bmiChart"),{
+type:"line",
+data:{labels:labels,datasets:[{label:"BMI",data:bmis}]}
+});
+
+}
+
+/////////////////////
+// Leaderboard
+/////////////////////
+
+function loadLeaderboard(){
+
+let users=[];
+
+for(let key in localStorage){
+
+if(key.startsWith("user_")){
+
+let user=key.replace("user_","");
+let history=JSON.parse(localStorage.getItem("history_"+user)) || [];
+let xp=Number(localStorage.getItem("xp_"+user) || 0);
+
+let weightLost=0;
+if(history.length>1){
+weightLost = history[0].weight - history[history.length-1].weight;
+}
+
+users.push({
+name:user,
+records:history.length,
+xp:xp,
+lost:weightLost
+});
+
+}
+}
+
+/* เรียงอันดับ */
+let lostSort=[...users].sort((a,b)=>b.lost-a.lost);
+let recSort=[...users].sort((a,b)=>b.records-a.records);
+let xpSort=[...users].sort((a,b)=>b.xp-a.xp);
+
+/* แสดงผล */
+document.getElementById("lbWeight").innerHTML=
+lostSort.map(u=>`<li>${u.name} - ${u.lost} กก.</li>`).join("");
+
+document.getElementById("lbRecord").innerHTML=
+recSort.map(u=>`<li>${u.name} - ${u.records} ครั้ง</li>`).join("");
+
+document.getElementById("lbXP").innerHTML=
+xpSort.map(u=>`<li>${u.name} - ${u.xp} XP</li>`).join("");
+
+}
+
+/////////////////////
+// เปลี่ยนหน้า
+/////////////////////
+
+function showSection(id){
+
+document.getElementById("home").style.display="none";
+document.getElementById("leaderboard").style.display="none";
+
+document.getElementById(id).style.display="block";
+
+}
+
+/////////////////////
+// ออกจากระบบ
+/////////////////////
+
+function logout(){
+location.reload();
+}
+
+</script>
+
+</body>
+</html>
