@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Health Dashboard</title>
+<title>Health & BMI</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -12,57 +12,73 @@
 body{
 font-family:tahoma;
 margin:0;
-background:#f3f5f9;
-display:flex;
+background:linear-gradient(135deg,#dfe9f3,#f3f5f9);
+animation:fadeIn 1s ease;
 }
 
-/* Sidebar */
-.sidebar{
-width:220px;
-background:#667eea;
-color:white;
-height:100vh;
-padding:20px;
-display:none;
+@keyframes fadeIn{
+from{opacity:0;}
+to{opacity:1;}
 }
 
-.sidebar button{
-width:100%;
-margin:10px 0;
-background:white;
-color:#667eea;
-font-weight:bold;
-}
-
-/* Main */
 .main{
-flex:1;
 padding:20px;
+max-width:900px;
+margin:auto;
 }
 
 .card{
 background:white;
 padding:20px;
-border-radius:15px;
-box-shadow:0 4px 15px rgba(0,0,0,0.1);
+border-radius:18px;
+box-shadow:0 6px 20px rgba(0,0,0,0.08);
 margin-bottom:20px;
+transition:0.4s;
+animation:slideUp 0.6s ease;
+}
+
+.card:hover{
+transform:translateY(-5px);
+}
+
+@keyframes slideUp{
+from{transform:translateY(20px);opacity:0;}
+to{transform:translateY(0);opacity:1;}
 }
 
 input{
 width:100%;
 padding:10px;
-margin:5px 0;
-border-radius:8px;
+margin:8px 0;
+border-radius:10px;
 border:1px solid #ccc;
+box-sizing:border-box;
+transition:0.3s;
+}
+
+input:focus{
+border-color:#667eea;
+outline:none;
+box-shadow:0 0 6px rgba(102,126,234,0.4);
 }
 
 button{
-padding:10px;
+padding:12px;
 border:none;
-border-radius:8px;
+border-radius:12px;
 background:#667eea;
 color:white;
 cursor:pointer;
+width:100%;
+margin-top:10px;
+transition:0.3s;
+font-weight:bold;
+}
+
+button:hover{
+background:#5563d6;
+transform:translateY(-2px);
+box-shadow:0 6px 15px rgba(0,0,0,0.2);
 }
 
 table{
@@ -73,7 +89,7 @@ margin-top:10px;
 
 td,th{
 border:1px solid #ddd;
-padding:8px;
+padding:10px;
 text-align:center;
 }
 
@@ -82,26 +98,16 @@ text-align:center;
 
 <body>
 
-<!-- เตือน 4 ทุ่ม -->
-<div id="sleepAlert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:black;color:white;align-items:center;justify-content:center;flex-direction:column;z-index:999;">
+<!-- เตือนการนอน -->
+<div id="sleepAlert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);color:white;align-items:center;justify-content:center;flex-direction:column;z-index:999;">
 <h1>🌙 ควรนอนได้แล้ว</h1>
 <button onclick="enterSite()">ตกลง เข้าเว็บ</button>
 </div>
 
-<!-- Sidebar -->
-<div class="sidebar" id="sidebar">
-<h2>Dashboard</h2>
-
-<button onclick="showSection('home')">🏠 หน้าแรก</button>
-<button onclick="showSection('leaderboard')">🥇 Leaderboard</button>
-<button onclick="showSection('bmiTable')">📊 ตาราง BMI</button>
-<button onclick="logout()">🚪 ออกจากระบบ</button>
-
-</div>
-
 <div class="main">
 
-<!-- Login -->
+<h1 style="text-align:center;">Health & BMI</h1>
+
 <div class="card" id="loginBox">
 <h3>เข้าสู่ระบบ</h3>
 <input id="user" placeholder="ชื่อผู้ใช้">
@@ -110,7 +116,6 @@ text-align:center;
 <button onclick="login()">เข้าสู่ระบบ</button>
 </div>
 
-<!-- HOME -->
 <div id="home" style="display:none">
 
 <div class="card">
@@ -139,13 +144,8 @@ text-align:center;
 <canvas id="bmiChart"></canvas>
 </div>
 
-</div>
-
-<!-- BMI TABLE -->
-<div id="bmiTable" style="display:none">
 <div class="card">
 <h3>📊 ตารางค่าดัชนี BMI</h3>
-
 <table>
 <tr><th>BMI</th><th>ระดับ</th></tr>
 <tr><td>น้อยกว่า 18.5</td><td>ผอม</td></tr>
@@ -154,22 +154,9 @@ text-align:center;
 <tr><td>25 - 29.9</td><td>อ้วนระดับ 1</td></tr>
 <tr><td>30 ขึ้นไป</td><td>อ้วนระดับ 2</td></tr>
 </table>
-
-</div>
 </div>
 
-<!-- LEADERBOARD -->
-<div id="leaderboard" style="display:none">
-
-<div class="card">
-<h3>🥇 ลดน้ำหนักได้มากที่สุด</h3>
-<ul id="lbWeight"></ul>
-</div>
-
-<div class="card">
-<h3>📅 บันทึกข้อมูลสม่ำเสมอ</h3>
-<ul id="lbRecord"></ul>
-</div>
+<button onclick="logout()">ออกจากระบบ</button>
 
 </div>
 
@@ -181,26 +168,25 @@ let currentUser="";
 let weightChart;
 let bmiChart;
 
-/* เตือน 4 ทุ่ม */
+/* เตือน 22:00 - 05:00 */
 let hour=new Date().getHours();
-if(hour>=22){
-document.getElementById("sleepAlert").style.display="flex";
+if(hour>=22 || hour<5){
+sleepAlert.style.display="flex";
 }
 
 function enterSite(){
-document.getElementById("sleepAlert").style.display="none";
+sleepAlert.style.display="none";
 }
 
 /* Clock */
 setInterval(()=>{
-document.getElementById("clock").innerText=
-new Date().toLocaleTimeString();
+clock.innerText=new Date().toLocaleTimeString();
 },1000);
 
 /* Register */
 function register(){
-let u=userInput();
-let p=passInput();
+let u=user.value;
+let p=pass.value;
 if(!u||!p) return alert("กรอกข้อมูล");
 localStorage.setItem("user_"+u,p);
 alert("สมัครสำเร็จ");
@@ -209,42 +195,34 @@ alert("สมัครสำเร็จ");
 /* Login */
 function login(){
 
-let u=userInput();
-let p=passInput();
+let u=user.value;
+let p=pass.value;
 
 if(localStorage.getItem("user_"+u)===p){
 
 currentUser=u;
-
 loginBox.style.display="none";
-sidebar.style.display="block";
 home.style.display="block";
-
 welcome.innerText="สวัสดี "+u;
 
 loadCharts();
 updateStreak();
-loadLeaderboard();
 
 }else alert("ข้อมูลไม่ถูกต้อง");
 
 }
-
-function userInput(){ return user.value; }
-function passInput(){ return pass.value; }
 
 /* Save Data */
 function saveData(){
 
 let h=height.value/100;
 let w=weight.value;
-let goal=goalInput();
+let goalValue=goal.value;
 
 if(!h||!w) return alert("กรอกข้อมูล");
 
 let bmi=(w/(h*h)).toFixed(2);
 
-/* บันทึก history */
 let history=JSON.parse(localStorage.getItem("history_"+currentUser))||[];
 
 history.push({
@@ -256,8 +234,8 @@ bmi:Number(bmi)
 localStorage.setItem("history_"+currentUser,JSON.stringify(history));
 
 /* Goal */
-if(goal){
-let diff=(w-goal).toFixed(1);
+if(goalValue){
+let diff=(w-goalValue).toFixed(1);
 goalText.innerText= diff>0 ? "เหลือลดอีก "+diff+" กก." : "ถึงเป้าแล้ว 🎉";
 }
 
@@ -271,7 +249,7 @@ else level="อ้วนระดับ2";
 
 bmiLevel.innerText="ระดับ BMI : "+level;
 
-/* ----- STREAK ----- */
+/* Streak */
 let today=new Date().toLocaleDateString();
 let lastDate=localStorage.getItem("lastDate_"+currentUser);
 let streak=Number(localStorage.getItem("streak_"+currentUser)||0);
@@ -284,13 +262,8 @@ let y=new Date();
 y.setDate(y.getDate()-1);
 y=y.toLocaleDateString();
 
-if(lastDate===y){
-streak++;
-}
-else if(lastDate!==today){
-streak=1;
-}
-
+if(lastDate===y) streak++;
+else if(lastDate!==today) streak=1;
 }
 
 localStorage.setItem("streak_"+currentUser,streak);
@@ -298,11 +271,8 @@ localStorage.setItem("lastDate_"+currentUser,today);
 
 updateStreak();
 loadCharts();
-loadLeaderboard();
 
 }
-
-function goalInput(){ return goal.value; }
 
 /* Update Streak */
 function updateStreak(){
@@ -322,7 +292,7 @@ let bmis=history.map(h=>h.bmi);
 if(weightChart) weightChart.destroy();
 if(bmiChart) bmiChart.destroy();
 
-weightChart=new Chart(weightChart = document.getElementById("weightChart"),{
+weightChart=new Chart(document.getElementById("weightChart"),{
 type:"line",
 data:{labels:labels,datasets:[{label:"น้ำหนัก",data:weights}]}
 });
@@ -332,49 +302,6 @@ type:"line",
 data:{labels:labels,datasets:[{label:"BMI",data:bmis}]}
 });
 
-}
-
-/* Leaderboard */
-function loadLeaderboard(){
-
-let users=[];
-
-for(let key in localStorage){
-
-if(key.startsWith("user_")){
-
-let u=key.replace("user_","");
-let history=JSON.parse(localStorage.getItem("history_"+u))||[];
-
-let lost=0;
-if(history.length>1){
-lost=history[0].weight-history[history.length-1].weight;
-}
-
-users.push({
-name:u,
-records:history.length,
-lost:lost
-});
-
-}
-}
-
-let lostSort=[...users].sort((a,b)=>b.lost-a.lost);
-let recSort=[...users].sort((a,b)=>b.records-a.records);
-
-lbWeight.innerHTML=lostSort.map(u=>`<li>${u.name} - ${u.lost} กก.</li>`).join("");
-lbRecord.innerHTML=recSort.map(u=>`<li>${u.name} - ${u.records} ครั้ง</li>`).join("");
-
-}
-
-/* Section */
-function showSection(id){
-home.style.display="none";
-leaderboard.style.display="none";
-bmiTable.style.display="none";
-
-document.getElementById(id).style.display="block";
 }
 
 /* Logout */
